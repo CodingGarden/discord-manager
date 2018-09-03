@@ -1,0 +1,16 @@
+{
+  "name": "discord-manager",
+  "version": "1.0.0",
+  "description": "* [ ] Move all users that HAVE posted a message in some channel into the \"seedling\" role * [ ] Move all users that have not yet posted a message into the \"germinating\" role * [ ] New users to the discord are placed into a \"germinating\" role   * [ ] All channels are hidden except for \"general\" and \"introductions\"   * [ ] Only have the ability to post in \"introductions\" * [ ] The \"seedling\" role can view all public channels * [ ] To be moved into the \"seedling\" role   * [ ] MUST emoji react the code of conduct post in \"general\"   * [ ] MUST post an introduction in the \"introductions\" channel     * [ ] Introduction must be at least 55 characters long.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "CJ R. <cj@null.computer> (https://w3cj.now.sh)",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^11.4.2",
+    "dotenv": "^6.0.0"
+  }
+}
