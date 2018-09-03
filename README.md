@@ -27,3 +27,8 @@
 
 * Make a request in the browser to:
   * https://discordapp.com/api/oauth2/authorize?client_id=12345&scope=bot&permissions=1
+
+### discord.js docs/examples
+
+* https://discord.js.org/#/docs/main/stable/general/welcome
+* https://discordjs.guide/#/popular-topics/miscellaneous-examples
