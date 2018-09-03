@@ -1,7 +1,7 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
-const { checkMoveToSeedling } = require('./lib');
+const { getRolesByName, checkMoveToSeedling } = require('./lib');
 
 require('dotenv').config();
 
