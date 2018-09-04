@@ -14,6 +14,7 @@
 ## TODO
 * [ ] Refactor CONST variables to .env
 * [ ] Refactor methods to use a local db like [nedb](https://github.com/louischatriot/nedb/)
+* [ ] Send a DM when a user is moved into the seedling group.
 * [ ] Fetch more than 100 reactions on a message...
   * [ ] Check snowflakeUtil class
   * https://discord.js.org/#/docs/main/stable/class/SnowflakeUtil
