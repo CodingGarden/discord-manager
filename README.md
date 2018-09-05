@@ -24,6 +24,7 @@
     * Update db
   * [x] Listen for messages in introductions
     * Update db when a message recieved for new user with length > 40
+* [ ] ON startup - get all users without a role and add them to germinating
 * [ ] Send a message when a user is moved into the seedling group.
 * [ ] Move all users that have not yet posted a message into the "germinating" role
 * [ ] Deploy!

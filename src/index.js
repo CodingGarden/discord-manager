@@ -1,6 +1,8 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
+const commands = require('./commands');
+
 const db = require('./db');
 
 const {
@@ -109,10 +111,17 @@ client.on('message', async (message) => {
   const { guild, channel, author } = message;
   if (channel.type === 'dm') return;
   
-  if (guild && guild.id === GUILD_ID && channel.id === INTRODUCTION_CHANNEL_ID) {
-    if (message.content.length >= MIN_INTRO_MESSAGE_LENGTH) {
-      const guildMember = await guild.fetchMember(author);
-      checkMoveToSeedling(guildMember, 'introduction');
+  if (guild && guild.id === GUILD_ID) {
+    if (channel.id === INTRODUCTION_CHANNEL_ID) {
+      if (message.content.length >= MIN_INTRO_MESSAGE_LENGTH) {
+        const guildMember = await guild.fetchMember(author);
+        checkMoveToSeedling(guildMember, 'introduction');
+      }
+    } else if (message.content[0] === '!') {
+      const command = message.content.split(' ')[0];
+      if (command) {
+        commands[command](message);
+      }
     }
   }
 });
