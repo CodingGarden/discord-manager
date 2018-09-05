@@ -23,9 +23,14 @@
   * [x] Listen for emoji reactions to COC message
     * Update db
   * [x] Listen for messages in introductions
-    * Update db when a message recieved for new user with length > 40
-* [ ] ON startup - get all users without a role and add them to germinating
-* [ ] Send a message when a user is moved into the seedling group.
+    * [x] Update db when a message recieved for new user with length > 40
+* [ ] ON startup
+  * [x] Add all germinating users to the db
+    * [x] Include COC
+    * [x] Include Intro Message
+  * [ ] get all users without a role and add them to germinating
+* [x] Send a message when a user joins the server.
+* [x] Send a message when a user is moved into the seedling group.
 * [ ] Move all users that have not yet posted a message into the "germinating" role
 * [ ] Deploy!
 * [ ] Stream notify channel

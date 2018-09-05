@@ -6,7 +6,8 @@ const {
   WELCOME_CHANNEL_ID,
   CODE_OF_CONDUCT_MESSAGE_ID,
   SEEDLING_ROLE_ID,
-  MIN_INTRO_MESSAGE_LENGTH
+  MIN_INTRO_MESSAGE_LENGTH,
+  WELCOME_MESSAGE
 } = require('../config');
 
 async function addMissingGerminators(guild) {
@@ -65,6 +66,8 @@ async function moveToGerminating(member) {
   }, {
     upsert: true
   });
+  const dmChannel = await member.createDM();
+  dmChannel.send(WELCOME_MESSAGE);
   try {
     await addRolePromise;
     console.log(member.user.username, 'added to germinating role!');
@@ -122,8 +125,11 @@ async function checkMoveToSeedling(guildMember, property) {
 }
 
 async function addToSeedling(guildMember) {
-  const addRolePromise = guildMember.addRole(SEEDLING_ROLE_ID);
+  const addRolePromise = guildMember..addRole(SEEDLING_ROLE_ID);
   const removeRolePromise = guildMember.removeRole(GERMINATING_ROLE_ID);
+
+  const introChannel = guildMember.guild.channels.get(INTRODUCTION_CHANNEL_ID);
+  introChannel.send(`Please welcome ${guildMember.user} to the Coding Garden!`);
 
   try {
     await addRolePromise;
