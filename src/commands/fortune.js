@@ -1,5 +1,8 @@
 const fortune = require('fortune-tweetable');
 
-module.exports = (message) => {
-  return message.channel.send(fortune.fortune());
+module.exports = {
+  triggers: ['fortune', '🔮'],
+  handler: (message) => {
+    return message.channel.send(fortune.fortune());
+  }
 };

@@ -21,7 +21,10 @@ const answers = [
   'Very doubtful'
 ];
 
-module.exports = (message) => {
-  const answer = answers[Math.floor(Math.random() * answers.length)];
-  return message.channel.send(`${message.author} ${answer} 🎱`);
+module.exports = {
+  triggers: ['8ball', '🎱'],
+  handler: (message) => {
+    const answer = answers[Math.floor(Math.random() * answers.length)];
+    return message.channel.send(`${message.author} ${answer} 🎱`);
+  }
 };

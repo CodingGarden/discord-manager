@@ -1,26 +1,26 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
-require('dotenv').config();
-
-const { getRolesByName } = require('../lib');
+const {
+  BOT_TOKEN,
+  SEEDLING_ROLE_ID
+} = require('../config');
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
   const guild = client.guilds.get(process.env.GUILD_ID);
-  const allRoles = guild.roles.array();
-  const rolesByName = getRolesByName(allRoles);
-  const otherRoles = allRoles.filter(role => role.name !== '@everyone');
+  const otherRoles = guild.roles.filter(role => role.name !== '@everyone');
   const otherRoleMembersById = otherRoles.reduce((membersById, role) => {
-    role.members.array().forEach(({user}) => {
+    role.members.forEach(({user}) => {
       membersById[user.id] = user;
     });
     return membersById;
   }, {});
   
-  const seedlingRole = rolesByName['@seedling'];
+  const seedlingRole = guild.roles.get(SEEDLING_ROLE_ID);
+  const everyoneRole = guild.roles.find(role => role.name === '@everyone');
   Promise.all(
-    rolesByName['@everyone'].members.array().map(member => {
+    everyoneRole.members.map(member => {
       if (!otherRoleMembersById[member.user.id]) {
         console.log('Starting to move', member.user.username);
         return member.addRole(seedlingRole).then(() => {
@@ -33,8 +33,8 @@ client.on('ready', () => {
       return Promise.resolve();
     })
   ).then(results => {
-    console.log(results.length);
+    console.log('Checked', results.length, 'users.');
   });
 });
 
-client.login(process.env.BOT_TOKEN);
+client.login(BOT_TOKEN);

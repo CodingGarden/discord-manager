@@ -1,15 +1,25 @@
 const fortune = require('./fortune');
 const eightBall = require('./eightBall');
 
-const commands = {
-  '!fortune': fortune,
-  '!8ball': eightBall
+const commands = [
+  fortune,
+  eightBall
+].reduce((all, cmd) => {
+  cmd.triggers.forEach(trigger => all[trigger] = cmd.handler);
+  return all;
+}, {});
+
+const allCommands = (message) => {
+  return message.channel.send(Object.keys(commands).join(' '));
 };
 
-const allCommands = Object.keys(commands);
+commands['commands'] = allCommands;
+commands['help'] = allCommands;
 
-commands['!commands'] = (message) => {
-  return message.channel.send(allCommands.join(' '));
+module.exports = {
+  handle: (command, message) => {
+    if (command && commands[command]) {
+      command(message);
+    }
+  }
 };
-
-module.exports = commands;
