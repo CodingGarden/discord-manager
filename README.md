@@ -12,15 +12,25 @@
 * [x] Watch code of conduct for emoji reactions and decide if we should move them to seedling role
 
 ## TODO
-* [ ] Refactor CONST variables to .env
-* [ ] Refactor methods to use a local db like [nedb](https://github.com/louischatriot/nedb/)
-* [ ] Send a DM when a user is moved into the seedling group.
-* [ ] Fetch more than 100 reactions on a message...
-  * [ ] Check snowflakeUtil class
-  * https://discord.js.org/#/docs/main/stable/class/SnowflakeUtil
+* [x] Setup eslint
+* [x] Refactor CONST variables to .env
+  * [x] Create a config object, load from .env
+* [x] Refactor methods to use a local db like [nedb](https://github.com/louischatriot/nedb/)
+  * [x] Listen for new users
+    * [x] Add to db with:
+      * CodeOfConduct - false
+      * Introduction - false
+  * [x] Listen for emoji reactions to COC message
+    * Update db
+  * [x] Listen for messages in introductions
+    * Update db when a message recieved for new user with length > 40
+* [ ] Send a message when a user is moved into the seedling group.
 * [ ] Move all users that have not yet posted a message into the "germinating" role
+* [ ] Deploy!
 * [ ] Stream notify channel
   * [ ] Join this channel to be notified when CJ goes live
+* [ ] Listen for leave server
+  * [ ] Remove COC reactions
 
 ## Resources
 
