@@ -125,7 +125,7 @@ async function checkMoveToSeedling(guildMember, property) {
 }
 
 async function addToSeedling(guildMember) {
-  const addRolePromise = guildMember..addRole(SEEDLING_ROLE_ID);
+  const addRolePromise = guildMember.addRole(SEEDLING_ROLE_ID);
   const removeRolePromise = guildMember.removeRole(GERMINATING_ROLE_ID);
 
   const introChannel = guildMember.guild.channels.get(INTRODUCTION_CHANNEL_ID);
