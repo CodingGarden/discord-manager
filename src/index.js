@@ -33,11 +33,25 @@ async function checkMoveToSeedling(guildMember, property) {
 }
 
 async function addToSeedling(guildMember) {
-  await Promise.all([
-    guildMember.addRole(SEEDLING_ROLE_ID),
-    guildMember.removeRole(GERMINATING_ROLE_ID)
-  ]);
-  console.log(guildMember.user.username, 'has become a seedling!');
+  const addRolePromise = guildMember.addRole(SEEDLING_ROLE_ID);
+  const removeRolePromise = guildMember.removeRole(GERMINATING_ROLE_ID);
+
+  try {
+    await addRolePromise;
+    console.log(guildMember.user.username, 'has become a seedling!');
+    await db.remove({
+      _id: guildMember.id
+    });
+  } catch (error) {
+    console.error('Error adding', guildMember.user.username, 'to seedling role!')
+  }
+
+  try {
+    await removeRolePromise;
+    console.log(guildMember.user.username, 'has been removed from germinating!');
+  } catch (error) {
+    console.error('Error removing', guildMember.user.username, 'from germinating role!')
+  }
 }
 
 client.on('ready', async () => {
@@ -61,25 +75,30 @@ client.on('guildMemberAdd', async (member) => {
   if (member.guild.id === GUILD_ID) {
     console.log(member.user.username, 'just joined the server!');
     const germinatingRole = guild.roles.get(GERMINATING_ROLE_ID);
-    
+    const addRolePromise = member.addRole(germinatingRole);
+    const insertDB = db.update({
+      _id: member.user.id,
+    }, {
+      _id: member.user.id,
+      codeOfConduct: false,
+      introduction: false
+    }, {
+      upsert: true
+    });
+
     try {
-      await Promise.all([
-        member.addRole(germinatingRole),
-        db.update({
-          _id: member.user.id,
-        }, {
-          _id: member.user.id,
-          codeOfConduct: false,
-          introduction: false
-        }, {
-          upsert: true
-        })
-      ]);
+      await addRolePromise;
       console.log(member.user.username, 'added to germinating role!');
-      console.log(member.user.username, 'inserted into DB!');
     } catch (error) {
       console.error('Error moving', member.user.username, 'to germinating role.');
       console.error(error);
+    }
+
+    try {
+      await insertDB;
+      console.log(member.user.username, 'inserted into DB!');
+    } catch (error) {
+      console.error('Error inserting', member.user.username, 'into DB.');
     }
   }
 });

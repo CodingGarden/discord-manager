@@ -31,6 +31,8 @@
   * [ ] Join this channel to be notified when CJ goes live
 * [ ] Listen for leave server
   * [ ] Remove COC reactions
+* [ ] Listen for role change
+  * [ ] Remove from DB
 
 ## Resources
 
