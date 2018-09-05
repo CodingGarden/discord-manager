@@ -1,5 +1,5 @@
 const fortune = require('./fortune');
-const eightBall = require('./8Ball');
+const eightBall = require('./eightBall');
 
 const commands = {
   '!fortune': fortune,
