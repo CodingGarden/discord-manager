@@ -119,7 +119,7 @@ client.on('message', async (message) => {
       }
     } else if (message.content[0] === '!') {
       const command = message.content.split(' ')[0];
-      if (command) {
+      if (command && commands[command]) {
         commands[command](message);
       }
     }
