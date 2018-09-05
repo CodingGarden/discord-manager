@@ -27,10 +27,9 @@ client.on('guildMemberAdd', (member) => {
 });
 
 client.on('message', (message) => {
+  const { guild, channel, author } = message;
   if (message.author.bot || channel.type === 'dm') return;
 
-  const { guild, channel, author } = message;
-  
   if (guild && guild.id === GUILD_ID) {
     if (channel.id === INTRODUCTION_CHANNEL_ID) {
       germinating.checkIntroMessage(message, guild, author);

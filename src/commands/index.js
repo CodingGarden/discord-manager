@@ -19,7 +19,7 @@ commands['help'] = allCommands;
 module.exports = {
   handle: (command, message) => {
     if (command && commands[command]) {
-      command(message);
+      commands[command](message);
     }
   }
 };

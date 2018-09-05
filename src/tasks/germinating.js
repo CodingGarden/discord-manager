@@ -1,6 +1,7 @@
 const db = require('../db');
 
 const {
+  INTRODUCTION_CHANNEL_ID,
   GERMINATING_ROLE_ID,
   WELCOME_CHANNEL_ID,
   CODE_OF_CONDUCT_MESSAGE_ID,
@@ -8,20 +9,47 @@ const {
   MIN_INTRO_MESSAGE_LENGTH
 } = require('../config');
 
-function addMissingGerminators(guild) {
-  guild.roles.get(GERMINATING_ROLE_ID).members.forEach(async (member) => {
-    const dbMember = await db.find({
-      _id: member.id
-    });
-    if (!dbMember) {
-      await db.insert({
-        _id: member.user.id,
-        codeOfConduct: false,
-        introduction: false
-      });
-      console.log('Added missing germinator to db:', member.user.username);
+async function addMissingGerminators(guild) {
+  const welcomeChannel = guild.channels.get(WELCOME_CHANNEL_ID);
+  const introChannel = guild.channels.get(INTRODUCTION_CHANNEL_ID);
+  const germinatingRole = guild.roles.get(GERMINATING_ROLE_ID);
+
+  const cocMessage = await welcomeChannel.fetchMessage(CODE_OF_CONDUCT_MESSAGE_ID);
+
+  const [reactionUsers, introMessages] = await Promise.all([
+    Promise.all(cocMessage.reactions.map(reaction => reaction.fetchUsers())),
+    introChannel.fetchMessages()
+  ]);
+
+  const validIntrosByUser = introMessages.reduce((byUser, message) => {
+    if (message.content.length >= MIN_INTRO_MESSAGE_LENGTH) {
+      byUser[message.author.id] = true;
     }
-  });
+    return byUser;
+  }, {});
+
+  return Promise.all(
+    germinatingRole.members.map(async (member) => {
+      const codeOfConduct = reactionUsers.some(collection => collection.get(member.id));
+      const introduction = !!validIntrosByUser[member.id];
+      const info = await db.update({
+        _id: member.user.id
+      },{
+        _id: member.user.id,
+        codeOfConduct,
+        introduction
+      }, {
+        upsert: true,
+        returnUpdatedDocs: true
+      });
+      if (info && info.codeOfConduct && info.introduction) {
+        addToSeedling(member);
+      } else {
+        console.log('Updated germinator in db:', member.user.username);
+        console.log(info);
+      }
+    })
+  );
 }
 
 async function moveToGerminating(member) {
