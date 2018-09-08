@@ -24,7 +24,7 @@ const answers = [
 module.exports = {
   name: '8 Ball',
   triggers: ['8ball', '🎱'],
-  description: 'Get a prediction for a yes or now question.',
+  description: 'Get a prediction for a yes or no question.',
   handler: (message) => {
     const answer = answers[Math.floor(Math.random() * answers.length)];
     return message.channel.send(`${message.author} ${answer} 🎱`);
