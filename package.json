@@ -10,10 +10,10 @@
   "author": "CJ R. <cj@null.computer> (https://w3cj.now.sh)",
   "license": "MIT",
   "dependencies": {
+    "countdown": "^2.6.0",
     "discord.js": "^11.4.2",
     "dotenv": "^6.0.0",
     "fortune-tweetable": "^1.0.0",
-    "ms": "^2.1.1",
     "nedb": "^1.8.0",
     "nedb-promises": "^3.0.1"
   },
