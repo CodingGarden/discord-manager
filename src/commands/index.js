@@ -12,7 +12,7 @@ const commands = [
 ].reduce((all, cmd) => {
   cmd.triggers.forEach(trigger => all[trigger] = cmd.handler);
   descriptions += `**${cmd.name}** - ${cmd.description}
-Usage: ${cmd.triggers.map(t => '!' + t).join(' or ')}
+Usage: ${cmd.triggers.map(t => '!' + t).join(' or ')} ${cmd.example || ''}
 
 `;
   return all;
