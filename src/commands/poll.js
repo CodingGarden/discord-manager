@@ -41,7 +41,7 @@ function canSendPoll(user_id) {
 
 module.exports = {
   name: 'poll',
-  triggers: ['poll'],
+  triggers: ['poll', '📊'],
   description: 'Ask a polling question. Vote by emoji reaction. Question and options must be wrapped in double quotes. Questions with no provided options are treated as Yes / No / Unsure questions.',
   example: '"Thoughtful question here?" "Optional Answer A" "Optional Answer B"',
   handler: (message) => {
