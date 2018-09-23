@@ -30,6 +30,7 @@
     * [x] Include Intro Message
   * [ ] get all users without a role and add them to germinating
 * [x] Send a message when a user joins the server.
+  * [ ] Log in DB if welcome message has been sent
 * [x] Send a message when a user is moved into the seedling group.
 * [ ] Move all users that have not yet posted a message into the "germinating" role
 * [ ] Deploy!

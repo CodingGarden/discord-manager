@@ -6,22 +6,27 @@ const commands = require('./commands');
 const {
   BOT_TOKEN,
   INTRODUCTION_CHANNEL_ID,
-  GUILD_ID
+  GUILD_ID,
+  DEBUGGING_COMMAND
 } = require('./config');
 
 const germinating = require('./tasks/germinating');
 
+if (DEBUGGING_COMMAND) {
+  console.log('DEBUGGING', DEBUGGING_COMMAND, 'command.');
+}
+
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
   const guild = client.guilds.get(GUILD_ID);
-  if (guild.id === GUILD_ID) {
+  if (!DEBUGGING_COMMAND && guild.id === GUILD_ID) {
     germinating.addMissingGerminators(guild);
     germinating.listenCodeOfConductReactions(guild);
   }
 });
 
 client.on('guildMemberAdd', (member) => {
-  if (member.guild.id === GUILD_ID) { 
+  if (!DEBUGGING_COMMAND && member.guild.id === GUILD_ID) { 
     germinating.moveToGerminating(member);
   }
 });
@@ -31,11 +36,16 @@ client.on('message', (message) => {
   if (message.author.bot || channel.type === 'dm') return;
 
   if (guild && guild.id === GUILD_ID) {
-    if (channel.id === INTRODUCTION_CHANNEL_ID) {
+    if (!DEBUGGING_COMMAND && channel.id === INTRODUCTION_CHANNEL_ID) {
       germinating.checkIntroMessage(message, guild, author);
     } else if (message.content[0] === '!') {
-      const command = message.content.split(' ')[0].substr(1);
-      commands.handle(command, message);
+      const command = message.content.split(' ')[0].substr(1).toLowerCase();
+
+      if (DEBUGGING_COMMAND && DEBUGGING_COMMAND === command) {
+        commands.handle(command, message);
+      } else if (!DEBUGGING_COMMAND) {
+        commands.handle(command, message);
+      }
     }
   }
 });

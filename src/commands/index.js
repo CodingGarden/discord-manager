@@ -1,12 +1,14 @@
 const uptime = require('./uptime');
 const fortune = require('./fortune');
 const eightBall = require('./eightBall');
+const poll = require('./poll');
 
 let descriptions = '';
 const commands = [
   fortune,
   eightBall,
-  uptime
+  uptime,
+  poll
 ].reduce((all, cmd) => {
   cmd.triggers.forEach(trigger => all[trigger] = cmd.handler);
   descriptions += `**${cmd.name}** - ${cmd.description}

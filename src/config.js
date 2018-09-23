@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 module.exports = {
+  DEBUGGING_COMMAND: process.env.DEBUGGING_COMMAND,
   BOT_TOKEN: process.env.BOT_TOKEN,
   GUILD_ID: process.env.GUILD_ID,
   WELCOME_CHANNEL_ID: process.env.WELCOME_CHANNEL_ID,
