@@ -10,29 +10,82 @@ const {
   WELCOME_MESSAGE
 } = require('../config');
 
-async function addMissingGerminators(guild) {
-  const welcomeChannel = guild.channels.get(WELCOME_CHANNEL_ID);
+async function getAllIntros(guild) {
   const introChannel = guild.channels.get(INTRODUCTION_CHANNEL_ID);
+  const intros = {};
+  let loadedAllMessages = false;
+  let before;
+
+  while(!loadedAllMessages) {
+    const messages = await introChannel.fetchMessages({
+      limit: 50,
+      before,
+    });
+    messages.tap((message) => {
+      if (message.content.length >= MIN_INTRO_MESSAGE_LENGTH) {
+        intros[message.author.id] = true;
+      }
+    });
+    before = messages.lastKey(1)[0];
+
+    if ([...messages.keys()].length < 50) {
+      loadedAllMessages = true;
+    }
+  }
+
+  return intros;
+}
+
+async function getAllReactions(guild) {
+  const welcomeChannel = guild.channels.get(WELCOME_CHANNEL_ID);
+  const message = await welcomeChannel.fetchMessage(CODE_OF_CONDUCT_MESSAGE_ID);
+
+  const reacted = {};
+
+  await Promise.all(message.reactions.map(async (messageReaction) => {
+    const users = await messageReaction.fetchUsers();
+    users.tap(({ id }) => {
+      reacted[id] = true;
+    });
+    if ([...users.keys()].length === 100) {
+      let finished = false;
+      while (!finished) {
+        const moreUsers = await messageReaction.fetchUsers(100, {
+          after: users.lastKey(1)[0],
+        });
+        moreUsers.tap(({ id }) => {
+          reacted[id] = true;
+        });
+        if ([...moreUsers.keys()].length < 100) finished = true;
+      }
+    }
+  }));
+
+  return reacted;
+}
+
+async function addMissingGerminators(guild) {
   const germinatingRole = guild.roles.get(GERMINATING_ROLE_ID);
 
-  const cocMessage = await welcomeChannel.fetchMessage(CODE_OF_CONDUCT_MESSAGE_ID);
+  await guild.fetchMembers();
 
-  const [reactionUsers, introMessages] = await Promise.all([
-    Promise.all(cocMessage.reactions.map(reaction => reaction.fetchUsers())),
-    introChannel.fetchMessages()
-  ]);
+  const promises = [];
 
-  const validIntrosByUser = introMessages.reduce((byUser, message) => {
-    if (message.content.length >= MIN_INTRO_MESSAGE_LENGTH) {
-      byUser[message.author.id] = true;
+  guild.members.tap((member) => {
+    if ([...member.roles.keys()].length === 1) {
+      promises.push(moveToGerminating(member));
     }
-    return byUser;
-  }, {});
+  });
+
+  await Promise.all(promises);
+
+  const reactions = await getAllReactions(guild);
+  const intros = await getAllIntros(guild);
 
   return Promise.all(
     germinatingRole.members.map(async (member) => {
-      const codeOfConduct = reactionUsers.some(collection => collection.get(member.id));
-      const introduction = !!validIntrosByUser[member.id];
+      const codeOfConduct = reactions[member.id] || false;
+      const introduction = intros[member.id] || false;
       const info = await db.update({
         _id: member.user.id
       },{
