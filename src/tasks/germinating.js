@@ -97,10 +97,7 @@ async function addMissingGerminators(guild) {
         returnUpdatedDocs: true
       });
       if (info && info.codeOfConduct && info.introduction) {
-        addToSeedling(member);
-      } else {
-        console.log('Updated germinator in db:', member.user.username);
-        console.log(info);
+        await addToSeedling(member);
       }
     })
   );
@@ -110,7 +107,7 @@ async function moveToGerminating(member) {
   console.log(member.user.username, 'just joined the server!');
   const germinatingRole = member.guild.roles.get(GERMINATING_ROLE_ID);
   const addRolePromise = member.addRole(germinatingRole);
-  const insertDB = db.update({
+  const insertDB = await db.update({
     _id: member.user.id,
   }, {
     _id: member.user.id,
@@ -135,25 +132,26 @@ async function moveToGerminating(member) {
   }
   catch (error) {
     console.error('Error inserting', member.user.username, 'into DB.');
+    console.error(error);
   }
 }
 
 async function listenCodeOfConductReactions(guild) {
   const welcomeChannel = guild.channels.get(WELCOME_CHANNEL_ID);
   const message = await welcomeChannel.fetchMessage(CODE_OF_CONDUCT_MESSAGE_ID);
-  const collector = message.createReactionCollector(_ => true);
+  const collector = message.createReactionCollector(() => true);
   collector.on('collect', async (reaction) => {
     const guildMembers = await Promise.all(reaction.users.map(user => guild.fetchMember(user)));
-    guildMembers.forEach(async (guildMember) => {
-      checkMoveToSeedling(guildMember, 'codeOfConduct');
-    });
+    await Promise.all(guildMembers.map(async (guildMember) => {
+      await checkMoveToSeedling(guildMember, 'codeOfConduct');
+    }));
   });
 }
 
 async function checkIntroMessage(message, guild, author) {
   if (message.content.length >= MIN_INTRO_MESSAGE_LENGTH) {
     const guildMember = await guild.fetchMember(author);
-    checkMoveToSeedling(guildMember, 'introduction');
+    await checkMoveToSeedling(guildMember, 'introduction');
   }
 }
 
@@ -172,7 +170,7 @@ async function checkMoveToSeedling(guildMember, property) {
     });
 
     if (info && info.codeOfConduct && info.introduction) {
-      addToSeedling(guildMember);
+      await addToSeedling(guildMember);
     }
   }
 }
@@ -192,6 +190,7 @@ async function addToSeedling(guildMember) {
     });
   } catch (error) {
     console.error('Error adding', guildMember.user.username, 'to seedling role!');
+    console.error(error);
   }
 
   try {
@@ -199,6 +198,7 @@ async function addToSeedling(guildMember) {
     console.log(guildMember.user.username, 'has been removed from germinating!');
   } catch (error) {
     console.error('Error removing', guildMember.user.username, 'from germinating role!');
+    console.error(error);
   }
 }
 
