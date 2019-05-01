@@ -11,6 +11,7 @@ const {
 } = require('../config');
 
 async function getAllIntros(guild) {
+  console.log('Start get all intros.');
   const introChannel = guild.channels.get(INTRODUCTION_CHANNEL_ID);
   const intros = {};
   let loadedAllMessages = false;
@@ -32,35 +33,39 @@ async function getAllIntros(guild) {
       loadedAllMessages = true;
     }
   }
-
+  
+  console.log('Got all intros.');
   return intros;
 }
 
 async function getAllReactions(guild) {
+  console.log('Start get all reactions');
+  
   const welcomeChannel = guild.channels.get(WELCOME_CHANNEL_ID);
   const message = await welcomeChannel.fetchMessage(CODE_OF_CONDUCT_MESSAGE_ID);
 
   const reacted = {};
 
   await Promise.all(message.reactions.map(async (messageReaction) => {
-    const users = await messageReaction.fetchUsers();
+    let users = await messageReaction.fetchUsers();
     users.tap(({ id }) => {
       reacted[id] = true;
     });
     if ([...users.keys()].length === 100) {
       let finished = false;
       while (!finished) {
-        const moreUsers = await messageReaction.fetchUsers(100, {
+        users = await messageReaction.fetchUsers(100, {
           after: users.lastKey(1)[0],
         });
-        moreUsers.tap(({ id }) => {
+        users.tap(({ id }) => {
           reacted[id] = true;
         });
-        if ([...moreUsers.keys()].length < 100) finished = true;
+        if ([...users.keys()].length < 100) finished = true;
       }
     }
   }));
 
+  console.log('Got all reactions.');
   return reacted;
 }
 
@@ -79,8 +84,10 @@ async function addMissingGerminators(guild) {
 
   await Promise.all(promises);
 
-  const reactions = await getAllReactions(guild);
-  const intros = await getAllIntros(guild);
+  const [reactions, intros] = await Promise.all([
+    getAllReactions(guild),
+    getAllIntros(guild)
+  ]);
 
   return Promise.all(
     germinatingRole.members.map(async (member) => {
