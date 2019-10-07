@@ -39,6 +39,22 @@ function canSendPoll(user_id) {
   return true;
 }
 
+function extractQuestionOptions(arguments) {
+  return [...new Set(arguments.slice(1))]
+}
+
+function removeDuplicateOptions(options, nextOption) {
+  insertIfNotExist(options, nextOption);
+
+  return options;
+}
+
+function insertIfNotExist(array, item) {
+  if(!array.includes(item.trim())) {
+    array.push(item.trim());
+  }
+}
+
 module.exports = {
   name: 'poll',
   triggers: ['poll', '📊'],
@@ -67,7 +83,7 @@ module.exports = {
       } else { // multiple choice
         args = args.map(a => a.replace(/"/g, ''));
         const question = args[0];
-        const questionOptions = [...new Set(args.slice(1))];
+        const questionOptions = extractQuestionOptions(args).reduce(removeDuplicateOptions, []);
         if (questionOptions.length > 20) {
           return message.channel.send(`${message.author} Polls are limited to 20 options.`);
         } else {
