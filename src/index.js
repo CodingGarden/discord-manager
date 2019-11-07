@@ -10,7 +10,7 @@ const {
   INTRODUCTION_CHANNEL_ID,
   GUILD_ID,
   DEBUGGING_COMMAND,
-  ADMIN_ID
+  MOD_ROLE_ID
 } = require('./config');
 
 const germinating = require('./tasks/germinating');
@@ -37,7 +37,7 @@ client.on('guildMemberAdd', (member) => {
 });
 
 client.on('message', (message) => {
-  const { guild, channel, author } = message;
+  const { guild, channel, author, member } = message;
   if (message.author.bot || channel.type === 'dm') return;
 
   if (guild && guild.id === GUILD_ID) {
@@ -46,8 +46,12 @@ client.on('message', (message) => {
     } else if (message.content[0] === '!') {
       const command = message.content.split(' ')[0].substr(1).toLowerCase();
 
-      if (command === 'restart' && author.id === ADMIN_ID) {
-        exec('forever restart 0');
+      if (command === 'restart') {
+        const modRole = member.roles.get(MOD_ROLE_ID);
+        if (modRole) {
+          console.log('restarting...');
+          exec('forever restart 0');
+        }
       } else if (DEBUGGING_COMMAND && DEBUGGING_COMMAND === command) {
         commands.handle(command, message);
       } else if (!DEBUGGING_COMMAND) {

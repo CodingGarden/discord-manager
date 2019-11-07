@@ -2,6 +2,7 @@ require('dotenv').config();
 
 module.exports = {
   ADMIN_ID: process.env.ADMIN_ID,
+  MOD_ROLE_ID: process.env.MOD_ROLE_ID,
   DEBUGGING_COMMAND: process.env.DEBUGGING_COMMAND,
   BOT_TOKEN: process.env.BOT_TOKEN,
   GUILD_ID: process.env.GUILD_ID,
