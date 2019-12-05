@@ -1,5 +1,8 @@
 const db = require('../db');
 
+const reactions = {};
+const introductions = {};
+
 const {
   INTRODUCTION_CHANNEL_ID,
   GERMINATING_ROLE_ID,
@@ -13,7 +16,6 @@ const {
 async function getAllIntros(guild) {
   console.log('Start get all intros.');
   const introChannel = guild.channels.get(INTRODUCTION_CHANNEL_ID);
-  const intros = {};
   let loadedAllMessages = false;
   let before;
 
@@ -24,7 +26,7 @@ async function getAllIntros(guild) {
     });
     messages.tap((message) => {
       if (message.content.length >= MIN_INTRO_MESSAGE_LENGTH) {
-        intros[message.author.id] = true;
+        introductions[message.author.id] = true;
       }
     });
     before = messages.lastKey(1)[0];
@@ -35,7 +37,7 @@ async function getAllIntros(guild) {
   }
   
   console.log('Got all intros.');
-  return intros;
+  return introductions;
 }
 
 async function getAllReactions(guild) {
@@ -44,12 +46,10 @@ async function getAllReactions(guild) {
   const welcomeChannel = guild.channels.get(WELCOME_CHANNEL_ID);
   const message = await welcomeChannel.fetchMessage(CODE_OF_CONDUCT_MESSAGE_ID);
 
-  const reacted = {};
-
   await Promise.all(message.reactions.map(async (messageReaction) => {
     let users = await messageReaction.fetchUsers();
     users.tap(({ id }) => {
-      reacted[id] = true;
+      reactions[id] = true;
     });
     if ([...users.keys()].length === 100) {
       let finished = false;
@@ -58,7 +58,7 @@ async function getAllReactions(guild) {
           after: users.lastKey(1)[0],
         });
         users.tap(({ id }) => {
-          reacted[id] = true;
+          reactions[id] = true;
         });
         if ([...users.keys()].length < 100) finished = true;
       }
@@ -66,7 +66,7 @@ async function getAllReactions(guild) {
   }));
 
   console.log('Got all reactions.');
-  return reacted;
+  return reactions;
 }
 
 async function addMissingGerminators(guild) {
@@ -77,6 +77,8 @@ async function addMissingGerminators(guild) {
   const promises = [];
 
   guild.members.tap((member) => {
+    introductions[member.id] = false;
+    reactions[member.id] = false;
     if ([...member.roles.keys()].length === 1) {
       promises.push(moveToGerminating(member));
     }
@@ -84,15 +86,24 @@ async function addMissingGerminators(guild) {
 
   await Promise.all(promises);
 
-  const [reactions, intros] = await Promise.all([
+  await Promise.all([
     getAllReactions(guild),
     getAllIntros(guild)
   ]);
 
+  const allReactions = Object.values(reactions);
+  const allIntroductions = Object.values(introductions);
+
+  console.log(allReactions.length, ' total guild members.');
+  console.log(allReactions.filter(r => r).length, ' have acknowledged the code of conduct.');
+  console.log(allReactions.filter(r => !r).length, ' have NOT acknowledged the code of conduct.');
+  console.log(allIntroductions.filter(i => i).length, ' have introduced themselves.');
+  console.log(allIntroductions.filter(i => !i).length, ' have NOT introduced themselves.');
+
   return Promise.all(
     germinatingRole.members.map(async (member) => {
       const codeOfConduct = reactions[member.id] || false;
-      const introduction = intros[member.id] || false;
+      const introduction = introductions[member.id] || false;
       const info = await db.update({
         _id: member.user.id
       },{
@@ -112,6 +123,14 @@ async function addMissingGerminators(guild) {
 
 async function moveToGerminating(member) {
   console.log(member.user.username, 'just joined the server!');
+  if (reactions[member.id] && introductions[member.id]) {
+    console.log(member.user.username, 'has been here before!');
+    await member.addRole(SEEDLING_ROLE_ID);
+    console.log(member.user.username, 'has become a seedling!');
+    const introChannel = member.guild.channels.get(INTRODUCTION_CHANNEL_ID);
+    introChannel.send(`Please welcome ${member.user} to the Coding Garden!`);
+    return;
+  }
   const germinatingRole = member.guild.roles.get(GERMINATING_ROLE_ID);
   const addRolePromise = member.addRole(germinatingRole);
   const insertDB = await db.update({
@@ -150,6 +169,7 @@ async function listenCodeOfConductReactions(guild) {
   collector.on('collect', async (reaction) => {
     const guildMembers = await Promise.all(reaction.users.map(user => guild.fetchMember(user)));
     await Promise.all(guildMembers.map(async (guildMember) => {
+      reactions[guildMember.id] = true;
       await checkMoveToSeedling(guildMember, 'codeOfConduct');
     }));
   });
@@ -158,6 +178,7 @@ async function listenCodeOfConductReactions(guild) {
 async function checkIntroMessage(message, guild, author) {
   if (message.content.length >= MIN_INTRO_MESSAGE_LENGTH) {
     const guildMember = await guild.fetchMember(author);
+    introductions[guildMember.id] = true;
     await checkMoveToSeedling(guildMember, 'introduction');
   }
 }
