@@ -4,6 +4,7 @@ const { exec } = require('child_process');
 const client = new Discord.Client();
 
 const commands = require('./commands');
+const db = require('./db');
 
 const {
   BOT_TOKEN,
@@ -33,6 +34,14 @@ client.on('ready', async () => {
 client.on('guildMemberAdd', (member) => {
   if (!DEBUGGING_COMMAND && member.guild.id === GUILD_ID) { 
     germinating.moveToGerminating(member);
+  }
+});
+
+client.on('guildMemberRemove', async (member) => {
+  if (!DEBUGGING_COMMAND && member.guild.id === GUILD_ID) { 
+    await db.remove({
+      _id: member.id
+    });
   }
 });
 
