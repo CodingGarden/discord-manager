@@ -71,3 +71,8 @@ client.on('message', (message) => {
 });
 
 client.login(BOT_TOKEN);
+
+process.on('unhandledRejection', error => {
+  console.log('unhandledRejection:', error.message);
+  console.error(error);
+});
