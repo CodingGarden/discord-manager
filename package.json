@@ -14,8 +14,7 @@
     "discord.js": "^11.4.2",
     "dotenv": "^6.0.0",
     "fortune-tweetable": "^1.0.0",
-    "nedb": "^1.8.0",
-    "nedb-promises": "^3.0.1"
+    "nedb": "^1.8.0"
   },
   "devDependencies": {
     "eslint": "^5.5.0"
