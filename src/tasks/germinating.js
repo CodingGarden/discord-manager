@@ -167,11 +167,16 @@ async function listenCodeOfConductReactions(guild) {
   const message = await welcomeChannel.fetchMessage(CODE_OF_CONDUCT_MESSAGE_ID);
   const collector = message.createReactionCollector(() => true);
   collector.on('collect', async (reaction) => {
-    const guildMembers = await Promise.all(reaction.users.map(user => guild.fetchMember(user)));
-    await Promise.all(guildMembers.map(async (guildMember) => {
+    const user = reaction.users.last();
+    try {
+      console.log(user, 'reacted to Code of Conduct!');
+      const guildMember = await guild.fetchMember(user);
       reactions[guildMember.user.id] = true;
-      await checkMoveToSeedling(guildMember, 'codeOfConduct');
-    }));
+      await checkMoveToSeedling(guildMember, 'codeOfConduct');  
+    } catch (error) {
+      console.log('error checking reaction for user', user);
+      console.error(error); 
+    }
   });
 }
 

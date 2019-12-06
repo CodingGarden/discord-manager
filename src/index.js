@@ -31,9 +31,16 @@ client.on('ready', async () => {
   }
 });
 
-client.on('guildMemberAdd', (member) => {
-  if (!DEBUGGING_COMMAND && member.guild.id === GUILD_ID) { 
-    germinating.moveToGerminating(member);
+client.on('guildMemberAdd', async (member) => {
+  if (!DEBUGGING_COMMAND && member.guild.id === GUILD_ID) {
+    try {
+      await germinating.moveToGerminating(member);
+    } catch (error) {
+      console.log('Error while moving to germinating:');
+      console.error(error.message);
+      console.error(error);
+      console.error(error.stack);
+    }
   }
 });
 
