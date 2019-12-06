@@ -48,18 +48,14 @@ async function getAllReactions(guild) {
 
   await Promise.all(message.reactions.map(async (messageReaction) => {
     let users = await messageReaction.fetchUsers();
-    users.tap(({ id }) => {
-      reactions[id] = true;
-    });
+    await validateReactions(users, guild, messageReaction);
     if ([...users.keys()].length === 100) {
       let finished = false;
       while (!finished) {
         users = await messageReaction.fetchUsers(100, {
           after: users.lastKey(1)[0],
         });
-        users.tap(({ id }) => {
-          reactions[id] = true;
-        });
+        await validateReactions(users, guild, messageReaction);
         if ([...users.keys()].length < 100) finished = true;
       }
     }
@@ -67,6 +63,26 @@ async function getAllReactions(guild) {
 
   console.log('Got all reactions.');
   return reactions;
+}
+
+async function validateReactions(users, guild, messageReaction) {
+  return Promise.all(users.map(async (user) => {
+    try {
+      await guild.fetchMember(user);
+      reactions[user.id] = true;
+    }
+    catch (error) {
+      if (error.message.includes('Unknown Member')) {
+        try {
+          console.log('Unknown Member, removing reaction:', messageReaction.emoji.name, user.name, user.id);
+          await messageReaction.remove(user);
+        }
+        catch (error) {
+          console.error('error removing reaction', error.message);
+        }
+      }
+    }
+  }));
 }
 
 async function addMissingGerminators(guild) {
