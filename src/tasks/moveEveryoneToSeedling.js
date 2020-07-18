@@ -8,8 +8,8 @@ const {
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
-  const guild = client.guilds.get(process.env.GUILD_ID);
-  const otherRoles = guild.roles.filter(role => role.name !== '@everyone');
+  const guild = client.guilds.cache.get(process.env.GUILD_ID);
+  const otherRoles = guild.roles.cache.filter(role => role.name !== '@everyone');
   const otherRoleMembersById = otherRoles.reduce((membersById, role) => {
     role.members.forEach(({user}) => {
       membersById[user.id] = user;
@@ -17,13 +17,13 @@ client.on('ready', () => {
     return membersById;
   }, {});
   
-  const seedlingRole = guild.roles.get(SEEDLING_ROLE_ID);
-  const everyoneRole = guild.roles.find(role => role.name === '@everyone');
+  const seedlingRole = guild.roles.cache.get(SEEDLING_ROLE_ID);
+  const everyoneRole = guild.roles.cache.find(role => role.name === '@everyone');
   Promise.all(
     everyoneRole.members.map(member => {
       if (!otherRoleMembersById[member.user.id]) {
         console.log('Starting to move', member.user.username);
-        return member.addRole(seedlingRole).then(() => {
+        return member.roles.add(seedlingRole).then(() => {
           console.log('Moved', member.user.username, 'to @seedling');
         }).catch(() => {
           console.log('Error moving', member.user.username, 'to @seedling');

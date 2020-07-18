@@ -22,7 +22,7 @@ if (DEBUGGING_COMMAND) {
 
 client.on('ready', async () => {
   console.log(`Logged in as ${client.user.tag}!`);
-  const guild = client.guilds.get(GUILD_ID);
+  const guild = client.guilds.cache.get(GUILD_ID);
   if (!DEBUGGING_COMMAND && guild.id === GUILD_ID) {
     germinating.listenCodeOfConductReactions(guild);
     console.log('Adding missing germinators...');
@@ -63,7 +63,7 @@ client.on('message', (message) => {
       const command = message.content.split(' ')[0].substr(1).toLowerCase();
 
       if (command === 'restart') {
-        const modRole = member.roles.get(MOD_ROLE_ID);
+        const modRole = member.roles.cache.get(MOD_ROLE_ID);
         if (modRole) {
           console.log('restarting...');
           exec('forever restart 0');

@@ -15,16 +15,16 @@ const introductions = {};
 
 async function getAllIntros(guild) {
   console.log('Start get all intros.');
-  const introChannel = guild.channels.get(INTRODUCTION_CHANNEL_ID);
+  const introChannel = guild.channels.cache.get(INTRODUCTION_CHANNEL_ID);
   let loadedAllMessages = false;
   let before;
 
   while(!loadedAllMessages) {
-    const messages = await introChannel.fetchMessages({
+    const messages = await introChannel.messages.fetch({
       limit: 50,
       before,
     });
-    messages.tap((message) => {
+    messages.each((message) => {
       if (message.content.length >= MIN_INTRO_MESSAGE_LENGTH) {
         introductions[message.author.id] = true;
       }
@@ -43,16 +43,16 @@ async function getAllIntros(guild) {
 async function getAllReactions(guild) {
   console.log('Start get all reactions');
   
-  const welcomeChannel = guild.channels.get(WELCOME_CHANNEL_ID);
-  const message = await welcomeChannel.fetchMessage(CODE_OF_CONDUCT_MESSAGE_ID);
+  const welcomeChannel = guild.channels.cache.get(WELCOME_CHANNEL_ID);
+  const message = await welcomeChannel.messages.fetch(CODE_OF_CONDUCT_MESSAGE_ID);
 
-  await Promise.all(message.reactions.map(async (messageReaction) => {
-    let users = await messageReaction.fetchUsers();
+  await Promise.all(message.reactions.cache.map(async (messageReaction) => {
+    let users = await messageReaction.users.fetch();
     await validateReactions(users, guild, messageReaction);
     if ([...users.keys()].length === 100) {
       let finished = false;
       while (!finished) {
-        users = await messageReaction.fetchUsers(100, {
+        users = await messageReaction.users.fetch(100, {
           after: users.lastKey(1)[0],
         });
         await validateReactions(users, guild, messageReaction);
@@ -68,7 +68,7 @@ async function getAllReactions(guild) {
 async function validateReactions(users, guild, messageReaction) {
   return Promise.all(users.map(async (user) => {
     try {
-      await guild.fetchMember(user);
+      await guild.members.fetch(user);
       reactions[user.id] = true;
     }
     catch (error) {
@@ -86,18 +86,22 @@ async function validateReactions(users, guild, messageReaction) {
 }
 
 async function addMissingGerminators(guild) {
-  const germinatingRole = guild.roles.get(GERMINATING_ROLE_ID);
+  const germinatingRole = guild.roles.cache.get(GERMINATING_ROLE_ID);
 
-  await guild.fetchMembers();
+
+  await guild.members.fetch();
 
   const promises = [];
 
-  guild.members.tap((member) => {
+  guild.members.cache.each((member) => {
     introductions[member.user.id] = false;
     reactions[member.user.id] = false;
-    if ([...member.roles.keys()].length === 1) {
+    if (member.roles.cache.has(SEEDLING_ROLE_ID)) return;
+    if (member.roles.cache.has(GERMINATING_ROLE_ID)) return;
+    promises.push(moveToGerminating(member));
+    /* if ([...member.roles.keys()].length === 1) {
       promises.push(moveToGerminating(member));
-    }
+    } */
   });
 
   await Promise.all(promises);
@@ -141,14 +145,14 @@ async function moveToGerminating(member) {
   console.log(member.user.username, 'just joined the server!');
   if (reactions[member.user.id] && introductions[member.user.id]) {
     console.log(member.user.username, 'has been here before!');
-    await member.addRole(SEEDLING_ROLE_ID);
+    await member.roles.add(SEEDLING_ROLE_ID);
     console.log(member.user.username, 'has become a seedling!');
-    const introChannel = member.guild.channels.get(INTRODUCTION_CHANNEL_ID);
+    const introChannel = member.guild.channels.cache.get(INTRODUCTION_CHANNEL_ID);
     introChannel.send(`Please welcome ${member.user} to the Coding Garden!`);
     return;
   }
-  const germinatingRole = member.guild.roles.get(GERMINATING_ROLE_ID);
-  const addRolePromise = member.addRole(germinatingRole);
+  const germinatingRole = member.guild.roles.cache.get(GERMINATING_ROLE_ID);
+  const addRolePromise = member.roles.add(germinatingRole);
   const insertDB = await db.update({
     _id: member.user.id,
   }, {
@@ -179,14 +183,14 @@ async function moveToGerminating(member) {
 }
 
 async function listenCodeOfConductReactions(guild) {
-  const welcomeChannel = guild.channels.get(WELCOME_CHANNEL_ID);
-  const message = await welcomeChannel.fetchMessage(CODE_OF_CONDUCT_MESSAGE_ID);
+  const welcomeChannel = guild.channels.cache.get(WELCOME_CHANNEL_ID);
+  const message = await welcomeChannel.messages.fetch(CODE_OF_CONDUCT_MESSAGE_ID);
   const collector = message.createReactionCollector(() => true);
-  collector.on('collect', async (reaction) => {
-    const user = reaction.users.last();
+  collector.on('collect', async (reaction, member) => {
+    const user = member;
     try {
       console.log(user, 'reacted to Code of Conduct!');
-      const guildMember = await guild.fetchMember(user);
+      const guildMember = await guild.members.fetch(user);
       reactions[guildMember.user.id] = true;
       await checkMoveToSeedling(guildMember, 'codeOfConduct');  
     } catch (error) {
@@ -198,14 +202,14 @@ async function listenCodeOfConductReactions(guild) {
 
 async function checkIntroMessage(message, guild, author) {
   if (message.content.length >= MIN_INTRO_MESSAGE_LENGTH) {
-    const guildMember = await guild.fetchMember(author);
+    const guildMember = await guild.members.fetch(author);
     introductions[guildMember.user.id] = true;
     await checkMoveToSeedling(guildMember, 'introduction');
   }
 }
 
 async function checkMoveToSeedling(guildMember, property) {
-  const germinatingRole = guildMember.roles.get(GERMINATING_ROLE_ID);
+  const germinatingRole = guildMember.roles.cache.get(GERMINATING_ROLE_ID);
   if (germinatingRole) {
     const info = await db.update({
       _id: guildMember.user.id
@@ -225,10 +229,10 @@ async function checkMoveToSeedling(guildMember, property) {
 }
 
 async function addToSeedling(guildMember) {
-  const addRolePromise = guildMember.addRole(SEEDLING_ROLE_ID);
-  const removeRolePromise = guildMember.removeRole(GERMINATING_ROLE_ID);
+  const addRolePromise = guildMember.roles.add(SEEDLING_ROLE_ID);
+  const removeRolePromise = guildMember.roles.remove(GERMINATING_ROLE_ID);
 
-  const introChannel = guildMember.guild.channels.get(INTRODUCTION_CHANNEL_ID);
+  const introChannel = guildMember.guild.channels.cache.get(INTRODUCTION_CHANNEL_ID);
   introChannel.send(`Please welcome ${guildMember.user} to the Coding Garden!`);
 
   try {
