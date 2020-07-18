@@ -2,10 +2,12 @@ const db = require('../db');
 
 const {
   INTRODUCTION_CHANNEL_ID,
+  MOD_ROLE_ID,
   GERMINATING_ROLE_ID,
   WELCOME_CHANNEL_ID,
   CODE_OF_CONDUCT_MESSAGE_ID,
   SEEDLING_ROLE_ID,
+  BOT_LOG_CHANNEL_ID,
   MIN_INTRO_MESSAGE_LENGTH,
   WELCOME_MESSAGE
 } = require('../config');
@@ -13,8 +15,14 @@ const {
 const reactions = {};
 const introductions = {};
 
+async function logBotMessage(guild, ...args) {
+  const botChannel = guild.channels.get(BOT_LOG_CHANNEL_ID);
+  botChannel.send(args.join(' '));
+  console.log(...args);
+}
+
 async function getAllIntros(guild) {
-  console.log('Start get all intros.');
+  logBotMessage(guild, 'Start get all intros.');
   const introChannel = guild.channels.get(INTRODUCTION_CHANNEL_ID);
   let loadedAllMessages = false;
   let before;
@@ -36,12 +44,12 @@ async function getAllIntros(guild) {
     }
   }
   
-  console.log('Got all intros.');
+  logBotMessage(guild, 'Got all intros.');
   return introductions;
 }
 
 async function getAllReactions(guild) {
-  console.log('Start get all reactions');
+  logBotMessage(guild, 'Start get all reactions');
   
   const welcomeChannel = guild.channels.get(WELCOME_CHANNEL_ID);
   const message = await welcomeChannel.fetchMessage(CODE_OF_CONDUCT_MESSAGE_ID);
@@ -61,7 +69,7 @@ async function getAllReactions(guild) {
     }
   }));
 
-  console.log('Got all reactions.');
+  logBotMessage(guild, 'Got all reactions.');
   return reactions;
 }
 
@@ -74,7 +82,7 @@ async function validateReactions(users, guild, messageReaction) {
     catch (error) {
       if (error.message.includes('Unknown Member')) {
         try {
-          console.log('Unknown Member, removing reaction:', messageReaction.emoji.name, user.name, user.id);
+          logBotMessage(guild, 'Unknown Member: ', user.id, 'Removing reaction: ', messageReaction.emoji.name);
           await messageReaction.remove(user);
         }
         catch (error) {
@@ -86,6 +94,7 @@ async function validateReactions(users, guild, messageReaction) {
 }
 
 async function addMissingGerminators(guild) {
+  logBotMessage(guild, 'Bot restarted.');
   const germinatingRole = guild.roles.get(GERMINATING_ROLE_ID);
 
   await guild.fetchMembers();
@@ -95,7 +104,9 @@ async function addMissingGerminators(guild) {
   guild.members.tap((member) => {
     introductions[member.user.id] = false;
     reactions[member.user.id] = false;
-    if ([...member.roles.keys()].length === 1) {
+    if (!member.roles.has(SEEDLING_ROLE_ID)
+      && !member.roles.has(GERMINATING_ROLE_ID)
+      && !member.roles.has(MOD_ROLE_ID)) {
       promises.push(moveToGerminating(member));
     }
   });
@@ -110,13 +121,13 @@ async function addMissingGerminators(guild) {
   const allReactions = Object.values(reactions);
   const allIntroductions = Object.values(introductions);
 
-  console.log(allReactions.length, ' total guild members.');
-  console.log(allReactions.filter(r => r).length, ' have acknowledged the code of conduct.');
-  console.log(allReactions.filter(r => !r).length, ' have NOT acknowledged the code of conduct.');
-  console.log(allIntroductions.filter(i => i).length, ' have introduced themselves.');
-  console.log(allIntroductions.filter(i => !i).length, ' have NOT introduced themselves.');
+  logBotMessage(guild, allReactions.length, ' total guild members.');
+  logBotMessage(guild, allReactions.filter(r => r).length, ' have acknowledged the code of conduct.');
+  logBotMessage(guild, allReactions.filter(r => !r).length, ' have NOT acknowledged the code of conduct.');
+  logBotMessage(guild, allIntroductions.filter(i => i).length, ' have introduced themselves.');
+  logBotMessage(guild, allIntroductions.filter(i => !i).length, ' have NOT introduced themselves.');
 
-  return Promise.all(
+  await Promise.all(
     germinatingRole.members.map(async (member) => {
       const codeOfConduct = reactions[member.user.id] || false;
       const introduction = introductions[member.user.id] || false;
@@ -135,14 +146,15 @@ async function addMissingGerminators(guild) {
       }
     })
   );
+  logBotMessage(guild, 'Ready!');
 }
 
 async function moveToGerminating(member) {
-  console.log(member.user.username, 'just joined the server!');
+  logBotMessage(member.guild, member.user.username, 'just joined the server!');
   if (reactions[member.user.id] && introductions[member.user.id]) {
-    console.log(member.user.username, 'has been here before!');
+    logBotMessage(member.guild, member.user.username, 'has been here before!');
     await member.addRole(SEEDLING_ROLE_ID);
-    console.log(member.user.username, 'has become a seedling!');
+    logBotMessage(member.guild, member.user.username, 'has become a seedling!');
     const introChannel = member.guild.channels.get(INTRODUCTION_CHANNEL_ID);
     introChannel.send(`Please welcome ${member.user} to the Coding Garden!`);
     return;
@@ -158,14 +170,19 @@ async function moveToGerminating(member) {
   }, {
     upsert: true
   });
-  const dmChannel = await member.createDM();
-  dmChannel.send(WELCOME_MESSAGE);
+  try {
+    const dmChannel = await member.createDM();
+    dmChannel.send(WELCOME_MESSAGE);
+  } catch (error) {
+    logBotMessage(member.guild, 'error sending Welcome DM to', member.user.username);
+    console.error(error);
+  }
   try {
     await addRolePromise;
-    console.log(member.user.username, 'added to germinating role!');
+    logBotMessage(member.guild, member.user.username, 'added to germinating role!');
   }
   catch (error) {
-    console.error('Error moving', member.user.username, 'to germinating role.');
+    logBotMessage(member.guild, 'Error moving', member.user.username, 'to germinating role.', error.message);
     console.error(error);
   }
   try {
@@ -185,7 +202,7 @@ async function listenCodeOfConductReactions(guild) {
   collector.on('collect', async (reaction) => {
     const user = reaction.users.last();
     try {
-      console.log(user, 'reacted to Code of Conduct!');
+      logBotMessage(guild, user.username, 'reacted to Code of Conduct with', reaction.emoji.name);
       const guildMember = await guild.fetchMember(user);
       reactions[guildMember.user.id] = true;
       await checkMoveToSeedling(guildMember, 'codeOfConduct');  
@@ -200,6 +217,7 @@ async function checkIntroMessage(message, guild, author) {
   if (message.content.length >= MIN_INTRO_MESSAGE_LENGTH) {
     const guildMember = await guild.fetchMember(author);
     introductions[guildMember.user.id] = true;
+    logBotMessage(guild, guildMember.user.username, 'sent a valid intro message of length', message.content.length);
     await checkMoveToSeedling(guildMember, 'introduction');
   }
 }
@@ -233,7 +251,7 @@ async function addToSeedling(guildMember) {
 
   try {
     await addRolePromise;
-    console.log(guildMember.user.username, 'has become a seedling!');
+    logBotMessage(guildMember.guild, guildMember.user.username, 'has become a seedling!');
     await db.remove({
       _id: guildMember.user.id
     });
