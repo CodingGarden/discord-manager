@@ -27,7 +27,6 @@ client.on('ready', async () => {
     germinating.listenCodeOfConductReactions(guild);
     console.log('Adding missing germinators...');
     await germinating.addMissingGerminators(guild);
-    console.log('Ready!');
   }
 });
 

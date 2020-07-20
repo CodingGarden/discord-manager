@@ -11,6 +11,7 @@ module.exports = {
   CODE_OF_CONDUCT_MESSAGE_ID: process.env.CODE_OF_CONDUCT_MESSAGE_ID,
   GERMINATING_ROLE_ID: process.env.GERMINATING_ROLE_ID,
   SEEDLING_ROLE_ID: process.env.SEEDLING_ROLE_ID,
+  BOT_LOG_CHANNEL_ID: process.env.BOT_LOG_CHANNEL_ID,
   MIN_INTRO_MESSAGE_LENGTH: process.env.MIN_INTRO_MESSAGE_LENGTH,
   WELCOME_MESSAGE: `Welcome to the 🌻 💚 **Coding Garden Discord!** 💚 🌻 
 
