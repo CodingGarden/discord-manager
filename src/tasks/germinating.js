@@ -227,7 +227,6 @@ async function checkIntroMessage(message, guild, author) {
     introductions[guildMember.user.id] = true;
     logBotMessage(guild, guildMember.user.username, 'sent a valid intro message of length', message.content.length);
     await checkMoveToSeedling(guildMember, 'introduction');
-    logBotMessage(guild, guildMember.user.username, 'sent a valid intro message of length', message.content.length);
   }
 }
 
