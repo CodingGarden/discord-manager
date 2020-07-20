@@ -128,7 +128,7 @@ async function addMissingGerminators(guild) {
   logBotMessage(guild, allIntroductions.filter(i => i).length, ' have introduced themselves.');
   logBotMessage(guild, allIntroductions.filter(i => !i).length, ' have NOT introduced themselves.');
 
-  return Promise.all(
+  await Promise.all(
     germinatingRole.members.map(async (member) => {
       const codeOfConduct = reactions[member.user.id] || false;
       const introduction = introductions[member.user.id] || false;
@@ -171,8 +171,13 @@ async function moveToGerminating(member) {
   }, {
     upsert: true
   });
-  const dmChannel = await member.createDM();
-  dmChannel.send(WELCOME_MESSAGE);
+  try {
+    const dmChannel = await member.createDM();
+    dmChannel.send(WELCOME_MESSAGE);
+  } catch (error) {
+    logBotMessage(member.guild, 'error sending Welcome DM to', member.user.username);
+    console.error(error);
+  }
   try {
     const dmChannel = await member.createDM();
     dmChannel.send(WELCOME_MESSAGE);
@@ -220,6 +225,7 @@ async function checkIntroMessage(message, guild, author) {
   if (message.content.length >= MIN_INTRO_MESSAGE_LENGTH) {
     const guildMember = await guild.members.fetch(author);
     introductions[guildMember.user.id] = true;
+    logBotMessage(guild, guildMember.user.username, 'sent a valid intro message of length', message.content.length);
     await checkMoveToSeedling(guildMember, 'introduction');
     logBotMessage(guild, guildMember.user.username, 'sent a valid intro message of length', message.content.length);
   }
