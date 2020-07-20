@@ -207,8 +207,8 @@ async function listenCodeOfConductReactions(guild) {
   const welcomeChannel = guild.channels.cache.get(WELCOME_CHANNEL_ID);
   const message = await welcomeChannel.messages.fetch(CODE_OF_CONDUCT_MESSAGE_ID);
   const collector = message.createReactionCollector(() => true);
-  collector.on('collect', async (reaction, member) => {
-    const user = member;
+  collector.on('collect', async (reaction) => {
+    const user = reaction.users.cache.last();
     try {
       logBotMessage(guild, user.username, 'reacted to Code of Conduct with', reaction.emoji.name);
       const guildMember = await guild.members.fetch(user);
