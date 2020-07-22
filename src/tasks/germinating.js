@@ -57,14 +57,14 @@ async function getAllReactions(guild) {
   await Promise.all(message.reactions.cache.map(async (messageReaction) => {
     let users = await messageReaction.users.fetch();
     await validateReactions(users, guild, messageReaction);
-    if ([...users.keys()].length === 100) {
+    if (users.size === 100) {
       let finished = false;
       while (!finished) {
-        users = await messageReaction.users.fetch(100, {
-          after: users.lastKey(1)[0],
+        users = await messageReaction.users.fetch({
+          after: users.lastKey(),
         });
         await validateReactions(users, guild, messageReaction);
-        if ([...users.keys()].length < 100) finished = true;
+        if (users.size < 100) finished = true;
       }
     }
   }));
@@ -83,7 +83,7 @@ async function validateReactions(users, guild, messageReaction) {
       if (error.message.includes('Unknown Member')) {
         try {
           logBotMessage(guild, 'Unknown Member: ', user.id, 'Removing reaction: ', messageReaction.emoji.name);
-          await messageReaction.remove(user);
+          await messageReaction.users.remove(user);
         }
         catch (error) {
           console.error('error removing reaction', error.message);
@@ -207,13 +207,14 @@ async function listenCodeOfConductReactions(guild) {
   const welcomeChannel = guild.channels.cache.get(WELCOME_CHANNEL_ID);
   const message = await welcomeChannel.messages.fetch(CODE_OF_CONDUCT_MESSAGE_ID);
   const collector = message.createReactionCollector(() => true);
-  collector.on('collect', async (reaction) => {
-    const user = reaction.users.cache.last();
+  collector.on('collect', async (reaction, user) => {
     try {
-      logBotMessage(guild, user.username, 'reacted to Code of Conduct with', reaction.emoji.name);
-      const guildMember = await guild.members.fetch(user);
-      reactions[guildMember.user.id] = true;
-      await checkMoveToSeedling(guildMember, 'codeOfConduct');  
+      if (!reactions[user.id]) {
+        logBotMessage(guild, user.username, 'reacted to Code of Conduct with', reaction.emoji.name);
+        const guildMember = await guild.members.fetch(user);
+        reactions[user.id] = true;
+        await checkMoveToSeedling(guildMember, 'codeOfConduct');  
+      }
     } catch (error) {
       console.log('error checking reaction for user', user);
       console.error(error); 
@@ -224,9 +225,11 @@ async function listenCodeOfConductReactions(guild) {
 async function checkIntroMessage(message, guild, author) {
   if (message.content.length >= MIN_INTRO_MESSAGE_LENGTH) {
     const guildMember = await guild.members.fetch(author);
-    introductions[guildMember.user.id] = true;
-    logBotMessage(guild, guildMember.user.username, 'sent a valid intro message of length', message.content.length);
-    await checkMoveToSeedling(guildMember, 'introduction');
+    if (!introductions[guildMember.user.id]) {
+      introductions[guildMember.user.id] = true;
+      logBotMessage(guild, guildMember.user.username, 'sent a valid intro message of length', message.content.length);
+      await checkMoveToSeedling(guildMember, 'introduction');
+    }
   }
 }
 
