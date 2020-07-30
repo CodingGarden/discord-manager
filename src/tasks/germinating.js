@@ -54,20 +54,23 @@ async function getAllReactions(guild) {
   const welcomeChannel = guild.channels.cache.get(WELCOME_CHANNEL_ID);
   const message = await welcomeChannel.messages.fetch(CODE_OF_CONDUCT_MESSAGE_ID);
 
-  await Promise.all(message.reactions.cache.map(async (messageReaction) => {
+  await message.reactions.cache.reduce(async (promise, messageReaction) => {
+    await promise;
+    console.log('Getting reactions for', messageReaction.emoji.name);
     let users = await messageReaction.users.fetch();
     await validateReactions(users, guild, messageReaction);
     if (users.size === 100) {
       let finished = false;
       while (!finished) {
+        const after = users.lastKey();
         users = await messageReaction.users.fetch({
-          after: users.lastKey(),
+          after,
         });
         await validateReactions(users, guild, messageReaction);
         if (users.size < 100) finished = true;
       }
     }
-  }));
+  }, Promise.resolve());
 
   logBotMessage(guild, 'Got all reactions.');
   return reactions;
@@ -88,6 +91,8 @@ async function validateReactions(users, guild, messageReaction) {
         catch (error) {
           console.error('error removing reaction', error.message);
         }
+      } else {
+        console.error('error fetching member', error);
       }
     }
   }));

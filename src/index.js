@@ -26,7 +26,11 @@ client.on('ready', async () => {
   if (!DEBUGGING_COMMAND && guild.id === GUILD_ID) {
     germinating.listenCodeOfConductReactions(guild);
     console.log('Adding missing germinators...');
-    await germinating.addMissingGerminators(guild);
+    try {
+      await germinating.addMissingGerminators(guild);
+    } catch (error) {
+      console.error(error);
+    }
   }
 });
 
