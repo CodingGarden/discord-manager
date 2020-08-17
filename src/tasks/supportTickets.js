@@ -11,11 +11,25 @@ async function sendMessageToModsChannel(guild, message) {
 }
 
 async function listenForTickets(guild) {
+  console.log('Listening for tickets');
   const ticketChannel = guild.channels.cache.get(TICKET_CHANNEL_ID);
   const ticketMessage = await ticketChannel.messages.fetch(TICKET_MESSAGE_ID);
   const collector = ticketMessage.createReactionCollector(() => true);
+
+  ticketMessage.reactions
+    .removeAll()
+    .catch((err) =>
+      console.log(
+        'There was a problem while removing the reactions of the ticket message: ',
+        err
+      )
+    );
+
   collector.on('collect', async (reaction, user) => {
-    sendMessageToModsChannel(guild, `${user.tag} has opened a support ticket.`);
+    sendMessageToModsChannel(
+      guild,
+      `<@${user.id}> has opened a support ticket.`
+    );
     listenForUserDMs(guild, user);
     reaction.remove();
   });
@@ -30,14 +44,16 @@ async function listenForUserDMs(guild, user) {
   userChannel.send(SUPPORT_TICKET_MESSAGE);
 
   collector.on('collect', async (message) => {
-    sendMessageToModsChannel(guild, `${user.tag} sent: ${message}`);
+    sendMessageToModsChannel(guild, `<@${user.id}> sent: ${message}`);
   });
 }
 
 async function replyToUser(message) {
-  let [_command, _user, ...body] = message.split(' ');
+  console.log(message.mentions);
+  // eslint-disable-next-line no-unused-vars
+  let [_command, _user, ...body] = message.content.split(' ');
   body = body.join(' ');
-  const user = message.mentions.first();
+  const user = message.mentions.users.first();
 
   user.send(body);
 }
