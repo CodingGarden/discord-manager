@@ -44,7 +44,8 @@ async function listenForUserDMs(guild, user) {
   userChannel.send(SUPPORT_TICKET_MESSAGE);
 
   collector.on('collect', async (message) => {
-    sendMessageToModsChannel(guild, `<@${user.id}> sent: ${message}`);
+    if (!message.author.bot)
+      sendMessageToModsChannel(guild, `<@${user.id}> sent: ${message}`);
   });
 }
 
