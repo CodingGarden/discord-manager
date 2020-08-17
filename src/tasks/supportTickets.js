@@ -50,7 +50,6 @@ async function listenForUserDMs(guild, user) {
 }
 
 async function replyToUser(message) {
-  console.log(message.mentions);
   // eslint-disable-next-line no-unused-vars
   let [_command, _user, ...body] = message.content.split(' ');
   body = body.join(' ');
