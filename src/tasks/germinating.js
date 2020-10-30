@@ -54,11 +54,12 @@ async function getAllReactions(guild) {
   const welcomeChannel = guild.channels.cache.get(WELCOME_CHANNEL_ID);
   const message = await welcomeChannel.messages.fetch(CODE_OF_CONDUCT_MESSAGE_ID);
 
+  const unknownUsers = {};
   await message.reactions.cache.reduce(async (promise, messageReaction) => {
     await promise;
     console.log('Getting reactions for', messageReaction.emoji.name);
     let users = await messageReaction.users.fetch();
-    await validateReactions(users, guild, messageReaction);
+    await validateReactions(users, guild, messageReaction, unknownUsers);
     if (users.size === 100) {
       let finished = false;
       while (!finished) {
@@ -66,7 +67,7 @@ async function getAllReactions(guild) {
         users = await messageReaction.users.fetch({
           after,
         });
-        await validateReactions(users, guild, messageReaction);
+        await validateReactions(users, guild, messageReaction, unknownUsers);
         if (users.size < 100) finished = true;
       }
     }
@@ -76,14 +77,20 @@ async function getAllReactions(guild) {
   return reactions;
 }
 
-async function validateReactions(users, guild, messageReaction) {
+async function validateReactions(users, guild, messageReaction, unknownUsers) {
   return Promise.all(users.map(async (user) => {
     try {
-      await guild.members.fetch(user.id);
-      reactions[user.id] = true;
+      if (unknownUsers[user.id]) {
+        logBotMessage(guild, 'Unknown Member: ', user.id, 'Removing reaction: ', messageReaction.emoji.name);
+        await messageReaction.users.remove(user);
+      } else {
+        await guild.members.fetch(user.id);
+        reactions[user.id] = true;
+      }
     }
     catch (error) {
       if (error.message.includes('Unknown Member')) {
+        unknownUsers[user.id] = true;
         try {
           logBotMessage(guild, 'Unknown Member: ', user.id, 'Removing reaction: ', messageReaction.emoji.name);
           await messageReaction.users.remove(user);
