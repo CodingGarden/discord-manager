@@ -79,7 +79,7 @@ async function getAllReactions(guild) {
 async function validateReactions(users, guild, messageReaction) {
   return Promise.all(users.map(async (user) => {
     try {
-      await guild.members.fetch(user);
+      await guild.members.fetch(user.id);
       reactions[user.id] = true;
     }
     catch (error) {

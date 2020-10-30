@@ -11,12 +11,12 @@
   "license": "MIT",
   "dependencies": {
     "countdown": "^2.6.0",
-    "discord.js": "^12.2.0",
+    "discord.js": "^12.4.1",
     "dotenv": "^8.2.0",
     "fortune-tweetable": "^1.0.0",
     "nedb": "^1.8.0"
   },
   "devDependencies": {
-    "eslint": "^7.4.0"
+    "eslint": "^7.12.1"
   }
 }
